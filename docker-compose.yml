@@ -1,0 +1,84 @@
+version: '3.7'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: laravel8-php-fpm-80
+    container_name: adminit
+    user: 'www-data:www-data'
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www
+    volumes:
+      - ./src:/var/www
+    networks:
+      - app-network
+  
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    tty: true
+    environment:
+      MYSQL_DATABASE: adminitdb
+      MYSQL_ROOT_PASSWORD: Libertis@123
+      MYSQL_PASSWORD: RootdevP@ssw0rd
+      MYSQL_USER: rootdev
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    networks:
+      - app-network
+  
+  nginx:
+    image: nginx:1.19.8-alpine
+    container_name: nginx
+    restart: unless-stopped
+    tty: true
+    ports:
+      - 8100:80
+    volumes:
+      - ./src:/var/www
+      - ./nginx/conf:/etc/nginx/conf.d
+    networks:
+      - app-network
+
+  redis:
+    image: redis:6.2.1-buster
+    container_name: redis
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./redis/data:/data
+    networks:
+      - app-network
+  
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mailhog
+    restart: unless-stopped
+    ports:
+      - 8025:8025
+    networks:
+      - app-network
+
+  phpmyadmin:
+    image: phpmyadmin:5.1.0-apache
+    container_name: phpmyadmin
+    restart: unless-stopped
+    ports:
+      - 8200:80
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: rootdev
+      PMA_PASSWORD: RootdevP@ssw0rd
+    networks:
+      - app-network
